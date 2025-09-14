@@ -1,0 +1,66 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Socio {
+  id          Int          @id @default(autoincrement())
+  nombre      String
+  apellido    String
+  edad        Int
+  email       String       @unique
+  estado      String
+  fechaAlta   DateTime     @default(now())
+  planId      Int?
+  rutinaId    Int?
+  asistencias Asistencia[]
+  pagos       Pago[]
+  plan        Plan?        @relation(fields: [planId], references: [id])
+  rutina      Rutina?      @relation(fields: [rutinaId], references: [id])
+}
+
+model Plan {
+  id     Int     @id @default(autoincrement())
+  tipo   String
+  costo  Float
+  estado String
+  socios Socio[]
+}
+
+model Rutina {
+  id       Int     @id @default(autoincrement())
+  nombre   String
+  nivel    String
+  duracion Int
+  objetivo String
+  socios   Socio[]
+}
+
+model Asistencia {
+  id      Int      @id @default(autoincrement())
+  fecha   DateTime @default(now())
+  socioId Int
+  clase   String
+  socio   Socio    @relation(fields: [socioId], references: [id])
+}
+
+model Pago {
+  id      Int      @id @default(autoincrement())
+  fecha   DateTime @default(now())
+  monto   Float
+  metodo  String
+  estado  String
+  socioId Int
+  socio   Socio    @relation(fields: [socioId], references: [id])
+}
+
+model Usuario {
+  id       Int    @id @default(autoincrement())
+  password String
+  role     String @default("admin")
+  email    String @unique
+}
