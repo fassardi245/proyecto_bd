@@ -25,7 +25,7 @@ model Socio {
 
 model Plan {
   id     Int     @id @default(autoincrement())
-  tipo   String
+  tipo   String  @unique
   costo  Float
   estado String
   socios Socio[]

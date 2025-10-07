@@ -3,11 +3,19 @@ import bcrypt from 'bcryptjs'
 
 const prisma = new PrismaClient()
 
-async function main() {
+async function findOrCreatePlan(tipo: string, costo: number) {
+  let plan = await prisma.plan.findFirst({ where: { tipo } });
+  if (!plan) {
+    plan = await prisma.plan.create({ data: { tipo, costo, estado: "activo" } });
+  }
+  return plan;
+}
 
-  const mensual = await prisma.plan.create({ data: { tipo: "Mensual", costo: 10000, estado: "activo" } })
-  const trimestral = await prisma.plan.create({ data: { tipo: "Trimestral", costo: 25000, estado: "activo" } })
-  const anual = await prisma.plan.create({ data: { tipo: "Anual", costo: 90000, estado: "activo" } })
+async function main() {
+  const mensual = await findOrCreatePlan("Mensual", 10000);
+  const trimestral = await findOrCreatePlan("Trimestral", 25000);
+  const anual = await findOrCreatePlan("Anual", 90000);
+
 
   const fuerza = await prisma.rutina.create({ data: { nombre: "Fuerza Total", nivel: "Intermedio", duracion: 8, objetivo: "fuerza" } })
   const volumen = await prisma.rutina.create({ data: { nombre: "Volumen Máximo", nivel: "Avanzado", duracion: 12, objetivo: "volumen" } })
@@ -22,6 +30,10 @@ async function main() {
   const socio7 = await prisma.socio.create({ data: { nombre: "Diego", apellido: "Ramírez", edad: 31, email: "diego@example.com", estado: "activo", planId: anual.id, rutinaId: fuerza.id } })
   const socio8 = await prisma.socio.create({ data: { nombre: "Valentina", apellido: "Mendoza", edad: 26, email: "valentina@example.com", estado: "activo", planId: mensual.id, rutinaId: volumen.id } })
 
+  const socioRojo = await prisma.socio.create({
+    data: { nombre: "Carlos", apellido: "Moreno", edad: 40, email: "carlos@example.com", estado: "activo", planId: mensual.id, rutinaId: fuerza.id }
+  })
+
   await prisma.pago.create({ data: { fecha: new Date(), monto: 10000, metodo: "Tarjeta", estado: "pagado", socioId: socio1.id } })
   await prisma.pago.create({ data: { fecha: new Date(), monto: 90000, metodo: "Efectivo", estado: "atrasado", socioId: socio2.id } })
   await prisma.pago.create({ data: { fecha: new Date(), monto: 10000, metodo: "Tarjeta", estado: "pagado", socioId: socio3.id } })
@@ -31,6 +43,9 @@ async function main() {
   await prisma.pago.create({ data: { fecha: new Date(), monto: 90000, metodo: "Tarjeta", estado: "pagado", socioId: socio7.id } })
   await prisma.pago.create({ data: { fecha: new Date(), monto: 10000, metodo: "Efectivo", estado: "pagado", socioId: socio8.id } })
 
+  await prisma.pago.create({ data: { fecha: new Date(), monto: 10000, metodo: "Tarjeta", estado: "atrasado", socioId: socioRojo.id } })
+  await prisma.pago.create({ data: { fecha: new Date(), monto: 15000, metodo: "Efectivo", estado: "vencido", socioId: socioRojo.id } })
+
   await prisma.asistencia.create({ data: { fecha: new Date(), socioId: socio1.id, clase: "Crossfit" } })
   await prisma.asistencia.create({ data: { fecha: new Date(), socioId: socio2.id, clase: "Yoga" } })
   await prisma.asistencia.create({ data: { fecha: new Date(), socioId: socio3.id, clase: "Crossfit" } })
@@ -39,15 +54,19 @@ async function main() {
   await prisma.asistencia.create({ data: { fecha: new Date(), socioId: socio6.id, clase: "Yoga" } })
   await prisma.asistencia.create({ data: { fecha: new Date(), socioId: socio7.id, clase: "Spinning" } })
   await prisma.asistencia.create({ data: { fecha: new Date(), socioId: socio8.id, clase: "Crossfit" } })
+  await prisma.asistencia.create({ data: { fecha: new Date(), socioId: socioRojo.id, clase: "Crossfit" } })
 
   const hashedPassAdmin = await bcrypt.hash("teo123", 10)
-await prisma.usuario.create({
-  data: {
-    email: "admin@gimnasio.com",
-    password: hashedPassAdmin,
-    role: "admin"
-  }
-})
+  await prisma.usuario.upsert({
+    where: { email: "admin@gimnasio.com" },
+    update: {},
+    create: {
+      email: "admin@gimnasio.com",
+      password: hashedPassAdmin,
+      role: "admin"
+    }
+  })
+
   console.log("Datos insertados en todas las tablas ✅")
 }
 
