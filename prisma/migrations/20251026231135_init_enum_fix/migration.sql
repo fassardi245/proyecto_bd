@@ -1,3 +1,15 @@
+-- CreateEnum
+CREATE TYPE "public"."EstadoSocio" AS ENUM ('activo', 'inactivo');
+
+-- CreateEnum
+CREATE TYPE "public"."EstadoPago" AS ENUM ('pagado', 'vencido', 'pendiente');
+
+-- CreateEnum
+CREATE TYPE "public"."MetodoPago" AS ENUM ('tarjeta', 'efectivo', 'transferencia', 'debito');
+
+-- CreateEnum
+CREATE TYPE "public"."ObjetivoRutina" AS ENUM ('fuerza', 'volumen', 'cardio', 'mixto');
+
 -- CreateTable
 CREATE TABLE "public"."Socio" (
     "id" SERIAL NOT NULL,
@@ -5,7 +17,7 @@ CREATE TABLE "public"."Socio" (
     "apellido" TEXT NOT NULL,
     "edad" INTEGER NOT NULL,
     "email" TEXT NOT NULL,
-    "estado" TEXT NOT NULL,
+    "estado" "public"."EstadoSocio" NOT NULL,
     "fechaAlta" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "planId" INTEGER,
     "rutinaId" INTEGER,
@@ -17,7 +29,7 @@ CREATE TABLE "public"."Socio" (
 CREATE TABLE "public"."Plan" (
     "id" SERIAL NOT NULL,
     "tipo" TEXT NOT NULL,
-    "costo" DOUBLE PRECISION NOT NULL,
+    "costo" INTEGER NOT NULL,
     "estado" TEXT NOT NULL,
 
     CONSTRAINT "Plan_pkey" PRIMARY KEY ("id")
@@ -29,7 +41,7 @@ CREATE TABLE "public"."Rutina" (
     "nombre" TEXT NOT NULL,
     "nivel" TEXT NOT NULL,
     "duracion" INTEGER NOT NULL,
-    "objetivo" TEXT NOT NULL,
+    "objetivo" "public"."ObjetivoRutina" NOT NULL,
 
     CONSTRAINT "Rutina_pkey" PRIMARY KEY ("id")
 );
@@ -47,10 +59,11 @@ CREATE TABLE "public"."Asistencia" (
 -- CreateTable
 CREATE TABLE "public"."Pago" (
     "id" SERIAL NOT NULL,
-    "fecha" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "monto" DOUBLE PRECISION NOT NULL,
-    "metodo" TEXT NOT NULL,
-    "estado" TEXT NOT NULL,
+    "fechaEsperada" TIMESTAMP(3) NOT NULL,
+    "fechaReal" TIMESTAMP(3),
+    "monto" INTEGER NOT NULL,
+    "metodo" "public"."MetodoPago",
+    "estado" "public"."EstadoPago" NOT NULL DEFAULT 'pendiente',
     "socioId" INTEGER NOT NULL,
 
     CONSTRAINT "Pago_pkey" PRIMARY KEY ("id")
@@ -59,9 +72,9 @@ CREATE TABLE "public"."Pago" (
 -- CreateTable
 CREATE TABLE "public"."Usuario" (
     "id" SERIAL NOT NULL,
-    "username" TEXT NOT NULL,
     "password" TEXT NOT NULL,
     "role" TEXT NOT NULL DEFAULT 'admin',
+    "email" TEXT NOT NULL,
 
     CONSTRAINT "Usuario_pkey" PRIMARY KEY ("id")
 );
@@ -70,7 +83,10 @@ CREATE TABLE "public"."Usuario" (
 CREATE UNIQUE INDEX "Socio_email_key" ON "public"."Socio"("email");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "Usuario_username_key" ON "public"."Usuario"("username");
+CREATE UNIQUE INDEX "Plan_tipo_key" ON "public"."Plan"("tipo");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "Usuario_email_key" ON "public"."Usuario"("email");
 
 -- AddForeignKey
 ALTER TABLE "public"."Socio" ADD CONSTRAINT "Socio_planId_fkey" FOREIGN KEY ("planId") REFERENCES "public"."Plan"("id") ON DELETE SET NULL ON UPDATE CASCADE;

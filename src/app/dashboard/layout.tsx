@@ -17,13 +17,11 @@ export default function DashboardLayout({ children }: Props) {
     setLoggedIn(isLogged);
     setAuthChecked(true);
 
-    // Redirige al home solo si NO hay login y estamos en dashboard
     if (!isLogged && pathname.startsWith("/dashboard")) {
       router.replace("/");
     }
   }, [router, pathname]);
 
-  // Evita renderizar antes de chequear login
   if (!authChecked) return null;
 
   const navItems = [
@@ -31,6 +29,8 @@ export default function DashboardLayout({ children }: Props) {
     { label: "Planes", href: "/dashboard/planes" },
     { label: "Socios", href: "/dashboard/socios" },
     { label: "Pagos", href: "/dashboard/pagos" },
+    { label: "Rutinas", href: "/dashboard/rutinas" }, 
+    { label: "Asistencias", href: "/dashboard/asistencias" }, 
   ];
 
   const isActive = (href: string) =>
@@ -43,12 +43,16 @@ export default function DashboardLayout({ children }: Props) {
         <div className="flex w-full h-16">
           {/* LEFT: logo y nav */}
           <div className="flex items-stretch bg-black">
-            {/* Logo */}
-            <div className="flex items-center justify-center w-24 select-none cursor-default">
-              <div className="w-10 h-10 bg-gradient-to-br from-orange-500 to-orange-600 rounded-md flex items-center justify-center text-white font-bold">
+            {/* Logo (clickeable) */}
+            <div
+              className="flex items-center justify-center w-24 select-none cursor-pointer"
+              onClick={() => router.push("/dashboard")} // 👈 al hacer clic, navega al inicio del panel
+            >
+              <div className="w-10 h-10 bg-gradient-to-br from-orange-500 to-orange-600 rounded-md flex items-center justify-center text-white font-bold transition-transform hover:scale-105">
                 GYM
               </div>
             </div>
+
 
             {/* Botones de navegación */}
             <nav className="flex items-stretch">
@@ -82,7 +86,7 @@ export default function DashboardLayout({ children }: Props) {
               onClick={() => {
                 localStorage.removeItem("isLoggedIn");
                 setLoggedIn(false);
-                router.replace("/"); // redirige al home
+                router.replace("/");
               }}
               className="px-6 flex-1 flex items-center justify-center text-white font-semibold text-sm bg-red-500 hover:bg-red-600 transition"
               style={{ cursor: "pointer" }}

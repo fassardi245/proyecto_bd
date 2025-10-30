@@ -7,60 +7,93 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+enum EstadoSocio {
+  activo
+  inactivo
+}
+
+enum EstadoPago {
+  pagado
+  vencido
+  pendiente
+}
+
+enum MetodoPago {
+  tarjeta
+  efectivo
+  transferencia
+  debito
+}
+
+enum ObjetivoRutina {
+  fuerza
+  volumen
+  cardio
+  mixto
+}
+
 model Socio {
-  id          Int          @id @default(autoincrement())
+  id          Int           @id @default(autoincrement())
   nombre      String
   apellido    String
   edad        Int
-  email       String       @unique
-  estado      String
-  fechaAlta   DateTime     @default(now())
+  email       String        @unique
+  estado      EstadoSocio
+  fechaAlta   DateTime      @default(now())
   planId      Int?
   rutinaId    Int?
+
+  plan        Plan?         @relation(fields: [planId], references: [id])
+  rutina      Rutina?       @relation(fields: [rutinaId], references: [id])
   asistencias Asistencia[]
   pagos       Pago[]
-  plan        Plan?        @relation(fields: [planId], references: [id])
-  rutina      Rutina?      @relation(fields: [rutinaId], references: [id])
 }
 
 model Plan {
   id     Int     @id @default(autoincrement())
   tipo   String  @unique
-  costo  Float
+  costo  Int
   estado String
+
   socios Socio[]
 }
 
 model Rutina {
-  id       Int     @id @default(autoincrement())
-  nombre   String
-  nivel    String
-  duracion Int
-  objetivo String
-  socios   Socio[]
+  id          Int          @id @default(autoincrement())
+  nombre      String
+  nivel       String
+  duracion    Int
+  objetivo    ObjetivoRutina
+
+  socios      Socio[]
+  asistencias Asistencia[]
 }
 
 model Asistencia {
-  id      Int      @id @default(autoincrement())
-  fecha   DateTime @default(now())
-  socioId Int
-  clase   String
-  socio   Socio    @relation(fields: [socioId], references: [id])
+  id        Int      @id @default(autoincrement())
+  fecha     DateTime @default(now())
+  socioId   Int
+  rutinaId  Int
+
+  socio     Socio    @relation(fields: [socioId], references: [id])
+  rutina    Rutina   @relation(fields: [rutinaId], references: [id])
 }
 
 model Pago {
-  id      Int      @id @default(autoincrement())
-  fecha   DateTime @default(now())
-  monto   Float
-  metodo  String
-  estado  String
-  socioId Int
-  socio   Socio    @relation(fields: [socioId], references: [id])
+  id             Int         @id @default(autoincrement())
+  fechaEsperada  DateTime
+  fechaReal      DateTime?
+  monto          Int
+  metodo         MetodoPago?
+  estado         EstadoPago  @default(pendiente)
+  socioId        Int
+
+  socio          Socio       @relation(fields: [socioId], references: [id])
 }
 
 model Usuario {
   id       Int    @id @default(autoincrement())
+  email    String @unique
   password String
   role     String @default("admin")
-  email    String @unique
 }
